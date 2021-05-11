@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: myscheduler-db
+    image: postgres:10.1-alpine
+    ports:
+      - 5432:5432
+    networks:
+      - poc-dashboard
+
+  app:
+    container_name: my-scheduler
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file: .env
+    volumes:
+      - .:/home/docker
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - poc-dashboard
+
+networks:
+  poc-dashboard:
