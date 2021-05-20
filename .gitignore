@@ -371,6 +371,7 @@ cython_debug/
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+.vscode-server
 
 # Local History for Visual Studio Code
 .history/
