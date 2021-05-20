@@ -3,11 +3,17 @@ version: "3.8"
 services:
   db:
     container_name: myscheduler-db
-    image: postgres:10.1-alpine
+    image: postgres:13-alpine
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PORT: ${DB_HOST}
     ports:
-      - 5432:5432
+      - ${DB_PORT}:5432
     networks:
-      - poc-dashboard
+      - myscheduler
 
   app:
     container_name: my-scheduler
@@ -19,10 +25,11 @@ services:
       - .:/home/docker
     ports:
       - 8000:8000
+    command: scripts/start.sh
     depends_on:
       - db
     networks:
-      - poc-dashboard
+      - myscheduler
 
 networks:
-  poc-dashboard:
+  myscheduler:
