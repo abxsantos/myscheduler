@@ -15,8 +15,10 @@ from distutils.util import strtobool
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+from myscheduler.applications.activities.apps import ActivityConfig
+from myscheduler.applications.authentication.apps import AuthenticationConfig
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -27,8 +29,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = strtobool(os.getenv("DJANGO_DEBUG", "false"))
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -40,10 +41,10 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
-LOCAL_APPS = []
+LOCAL_APPS = ["myscheduler.core", AuthenticationConfig.name, ActivityConfig.name]
 
-DEBUG_THIRD_PARTY = []
-THIRD_PARTY = []
+DEBUG_THIRD_PARTY = ["django_extensions"]
+THIRD_PARTY = ["django_q"]
 
 THIRD_PARTY += DEBUG_THIRD_PARTY if DEBUG else THIRD_PARTY
 
@@ -79,7 +80,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myscheduler.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
@@ -93,7 +93,6 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT"),
     },
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -113,7 +112,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -127,7 +125,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -138,28 +135,51 @@ STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGGING = (
-    {
-        "version": 1,
-        "filters": {
-            "require_debug_true": {
-                "()": "django.utils.log.RequireDebugTrue",
-            }
+# Disable Django's logging setup
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+    },
+    "filters": {
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        }
+    },
+    "handlers": {
+        "default": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
         },
-        "handlers": {
-            "console": {
-                "level": "DEBUG",
-                "filters": ["require_debug_true"],
-                "class": "logging.StreamHandler",
-            }
+        "request_handler": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
         },
-        "loggers": {
-            "django.db.backends": {
-                "level": "DEBUG",
-                "handlers": ["console"],
-            }
+        "queries": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "filters": ["require_debug_true"],
         },
-    }
-    if DEBUG
-    else {}
-)
+    },
+    "loggers": {
+        "": {"handlers": ["default"], "level": "INFO", "propagate": True},
+        "django.request": {"handlers": ["request_handler"], "level": "INFO", "propagate": False},
+        # "django.db.backends": {"handlers": ["queries"], "level": "DEBUG", "propagate": False},
+    },
+}
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+
+Q_CLUSTER = {
+    "name": "myscheduler",
+    "orm": "default",  # Use Django's ORM + database for broker
+    "save_limit": int(os.getenv("Q_CLUSTER_SAVE_LIMIT", 0)),  # -1 to not save success tasks
+    "max_attempts": int(os.getenv("Q_CLUSTER_MAX_ATTEMPTS", 5)),  # Attempts before failing
+    "retry": int(os.getenv("Q_CLUSTER_RETRY", 15)),  # Seconds a broker will wait for a cluster to finish a task
+    "timeout": int(os.getenv("Q_CLUSTER_TIMEOUT", 10)),  # Seconds a worker spend on a task before it’s terminated
+    "poll": int(os.getenv("Q_CLUSTER_POOL", 0.2)),  # Seconds which django Q will make a query to verify the time
+}
