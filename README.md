@@ -78,6 +78,9 @@ To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
+This project needs a valid telegram token to run successfully. For that you can access the 
+[telegram bots documentation](https://core.telegram.org/bots/api).
+
 To run this project you must either run it using [docker](https://docs.docker.com/get-docker/), or use [python version 3.9.5](https://www.python.org/downloads/) in your local environment.
 
 If you are running locally, you must also provide a [PostgreSQL](https://www.postgresql.org/download/) database!
